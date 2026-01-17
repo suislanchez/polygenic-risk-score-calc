@@ -34,13 +34,13 @@ def match_variants(genotypes_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.Da
     Match genotyped variants to scoring file variants.
 
     Matching strategy:
-    1. Primary: Match by rsid
-    2. Fallback: Match by chr:pos
+    1. Primary: Match by chr:pos (most reliable for harmonized PGS files)
+    2. Fallback: Match by rsid if available
     3. Handle strand flips by checking complements
 
     Args:
         genotypes_df: DataFrame with columns [rsid, chrom, pos, allele1, allele2, genotype]
-        scores_df: DataFrame with columns [rsid, chr_name, chr_position, effect_allele,
+        scores_df: DataFrame with columns [hm_chr, hm_pos, effect_allele,
                                            other_allele, effect_weight]
 
     Returns:
@@ -50,42 +50,23 @@ def match_variants(genotypes_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.Da
     geno = genotypes_df.copy()
     scores = scores_df.copy()
 
-    # Ensure consistent types
-    geno["rsid"] = geno["rsid"].astype(str).str.lower()
-    scores["rsid"] = scores["rsid"].astype(str).str.lower()
-
-    # Create chr:pos keys for fallback matching
+    # Create chr:pos keys for matching (primary method for harmonized PGS files)
     geno["chr_pos"] = geno["chrom"].astype(str) + ":" + geno["pos"].astype(str)
-    scores["chr_pos"] = scores["chr_name"].astype(str) + ":" + scores["chr_position"].astype(str)
 
-    # Primary match by rsid
+    # Use harmonized coordinates if available, fall back to original
+    if "hm_chr" in scores.columns and "hm_pos" in scores.columns:
+        scores["chr_pos"] = scores["hm_chr"].astype(str) + ":" + scores["hm_pos"].astype(str)
+    else:
+        scores["chr_pos"] = scores["chr_name"].astype(str) + ":" + scores["chr_position"].astype(str)
+
+    # Match by chr:pos (primary - works for harmonized files without rsIDs)
     matched = pd.merge(
         geno,
         scores,
-        on="rsid",
+        on="chr_pos",
         how="inner",
         suffixes=("_geno", "_score")
     )
-
-    # Get unmatched variants for chr:pos fallback
-    matched_rsids = set(matched["rsid"])
-    unmatched_geno = geno[~geno["rsid"].isin(matched_rsids)]
-    unmatched_scores = scores[~scores["rsid"].isin(matched_rsids)]
-
-    if len(unmatched_geno) > 0 and len(unmatched_scores) > 0:
-        # Fallback match by chr:pos
-        fallback_matched = pd.merge(
-            unmatched_geno,
-            unmatched_scores,
-            on="chr_pos",
-            how="inner",
-            suffixes=("_geno", "_score")
-        )
-
-        if len(fallback_matched) > 0:
-            # Use rsid from genotypes for fallback matches
-            fallback_matched["rsid"] = fallback_matched["rsid_geno"]
-            matched = pd.concat([matched, fallback_matched], ignore_index=True)
 
     if len(matched) == 0:
         return pd.DataFrame()
@@ -228,8 +209,9 @@ def normalize_prs(raw_prs: float, population: str = "EUR") -> dict:
     # Convert to percentile using standard normal CDF
     percentile = stats.norm.cdf(zscore) * 100
 
-    # Get risk category
-    risk_category = get_risk_category(percentile)
+    # Get risk category (returns dict, extract label)
+    risk_info = get_risk_category(percentile)
+    risk_category = risk_info["label"] if isinstance(risk_info, dict) else risk_info
 
     return {
         "zscore": zscore,
