@@ -21,6 +21,7 @@ image = modal.Image.debian_slim(python_version="3.11").pip_install(
     "requests>=2.31",
     "weasyprint>=60.0",
     "pyliftover>=0.4",
+    "fastapi>=0.100.0",
 )
 
 
@@ -195,6 +196,39 @@ def process_full(
     }
 
 
+# Web endpoint for HTTP access from Vercel/frontend
+@app.function(
+    image=image,
+    timeout=600,
+    memory=2048,
+)
+@modal.fastapi_endpoint(method="POST")
+def compute_prs_web(request: dict) -> dict:
+    """
+    HTTP endpoint for PRS computation.
+
+    Expects JSON body with:
+    - file_content: base64 encoded file content
+    - filename: original filename
+    - ancestry: ancestry code (EUR, AFR, EAS, AMR, SAS)
+    """
+    import base64
+
+    try:
+        file_content = base64.b64decode(request.get("file_content", ""))
+        filename = request.get("filename", "upload.txt")
+        ancestry = request.get("ancestry", "EUR")
+
+        result = compute_prs.local(
+            file_content=file_content,
+            filename=filename,
+            ancestry=ancestry,
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 # Local entrypoint for testing
 @app.local_entrypoint()
 def main():
@@ -206,6 +240,7 @@ def main():
     print("  - compute_prs: Compute PRS from DNA file")
     print("  - generate_report_pdf: Generate PDF report")
     print("  - process_full: Full workflow (PRS + PDF)")
+    print("  - compute_prs_web: HTTP endpoint for web access")
     print()
     print("Deploy with: modal deploy modal_app.py")
     print("Serve locally with: modal serve modal_app.py")
