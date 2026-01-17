@@ -191,7 +191,7 @@ export default function Home() {
                     fontWeight: 'bold',
                     color: RISK_COLORS[data.risk_category] || '#64748b'
                   }}>
-                    {(data.percentile * 100).toFixed(1)}%
+                    {data.percentile.toFixed(1)}%
                   </div>
                   <div style={{
                     display: 'inline-block',
