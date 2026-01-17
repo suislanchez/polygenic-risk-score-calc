@@ -1,0 +1,2 @@
+# This directory caches downloaded PGSCatalog scoring files
+# Files are named: {PGS_ID}_{BUILD}.txt (e.g., PGS000018_GRCh37.txt)
