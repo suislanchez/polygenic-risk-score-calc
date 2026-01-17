@@ -5,11 +5,101 @@ Generates professional HTML and PDF reports with risk visualizations,
 clinical disclaimers, and actionable recommendations.
 """
 
+import hashlib
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from weasyprint import HTML, CSS
+
+
+# Disease categories for grouping in reports
+DISEASE_CATEGORIES = {
+    "cardiovascular": {
+        "name": "Cardiovascular",
+        "icon": "heart",
+        "color": "#dc2626",
+        "diseases": ["cad", "afib", "stroke", "hypertension"]
+    },
+    "oncology": {
+        "name": "Oncology",
+        "icon": "ribbon",
+        "color": "#7c3aed",
+        "diseases": ["breast_cancer", "prostate_cancer", "colorectal_cancer", "colorectal"]
+    },
+    "metabolic": {
+        "name": "Metabolic & Endocrine",
+        "icon": "metabolism",
+        "color": "#0891b2",
+        "diseases": ["t2d", "obesity", "gout"]
+    },
+    "neurological": {
+        "name": "Neurological & Mental Health",
+        "icon": "brain",
+        "color": "#059669",
+        "diseases": ["alzheimers", "depression", "bipolar_disorder", "schizophrenia", "migraine"]
+    },
+    "autoimmune": {
+        "name": "Autoimmune & Inflammatory",
+        "icon": "shield",
+        "color": "#d97706",
+        "diseases": ["rheumatoid_arthritis", "crohns_disease", "ulcerative_colitis",
+                    "multiple_sclerosis", "lupus", "celiac_disease", "psoriasis"]
+    },
+    "other": {
+        "name": "Other Conditions",
+        "icon": "health",
+        "color": "#6b7280",
+        "diseases": ["asthma", "glaucoma", "osteoporosis"]
+    }
+}
+
+# Risk level explanations for patients
+RISK_EXPLANATIONS = {
+    "Very Low": {
+        "summary": "Your genetic risk is significantly below average",
+        "meaning": "Your genetic profile suggests you have a lower than typical predisposition for this condition compared to others of your ancestry. This is a favorable finding.",
+        "action": "Continue standard preventive care and healthy lifestyle habits.",
+        "icon": "check-circle"
+    },
+    "Low": {
+        "summary": "Your genetic risk is below average",
+        "meaning": "Your genetic predisposition for this condition is lower than most people of similar ancestry. While this is positive, other factors still influence risk.",
+        "action": "Maintain healthy habits and follow standard screening guidelines.",
+        "icon": "check"
+    },
+    "Average": {
+        "summary": "Your genetic risk is typical for your population",
+        "meaning": "Your genetic risk is similar to most people of your ancestry. This means genetics neither significantly increases nor decreases your risk.",
+        "action": "Follow age-appropriate screening and prevention guidelines.",
+        "icon": "minus"
+    },
+    "Elevated": {
+        "summary": "Your genetic risk is above average",
+        "meaning": "Your genetic profile indicates a moderately increased predisposition for this condition. This does not mean you will develop the condition, but proactive monitoring may be beneficial.",
+        "action": "Discuss enhanced screening options with your healthcare provider.",
+        "icon": "alert-triangle"
+    },
+    "High": {
+        "summary": "Your genetic risk is significantly above average",
+        "meaning": "Your genetic predisposition for this condition is higher than 90% of people of similar ancestry. Early intervention and enhanced monitoring are strongly recommended.",
+        "action": "Consult with a specialist to discuss personalized prevention strategies.",
+        "icon": "alert-circle"
+    }
+}
+
+
+def generate_report_id() -> str:
+    """Generate a unique report ID."""
+    unique_id = uuid.uuid4().hex[:8].upper()
+    return f"PRS-{unique_id}"
+
+
+def generate_verification_code(report_id: str, patient_id: str) -> str:
+    """Generate a verification code for the report."""
+    data = f"{report_id}:{patient_id}:{datetime.now().strftime('%Y%m%d')}"
+    return hashlib.sha256(data.encode()).hexdigest()[:12].upper()
 
 
 # Clinical recommendations based on AHA/NHS guidelines
@@ -291,17 +381,67 @@ DISEASE_RECOMMENDATIONS = {
 
 # Display names for diseases
 DISEASE_DISPLAY_NAMES = {
+    # Original 10 diseases
+    "cad": "Coronary Artery Disease",
     "CAD": "Coronary Artery Disease",
     "breast_cancer": "Breast Cancer",
     "t2d": "Type 2 Diabetes",
     "prostate_cancer": "Prostate Cancer",
     "alzheimers": "Alzheimer's Disease",
     "colorectal": "Colorectal Cancer",
+    "colorectal_cancer": "Colorectal Cancer",
     "afib": "Atrial Fibrillation",
     "stroke": "Stroke",
     "obesity": "Obesity",
-    "depression": "Major Depression"
+    "depression": "Major Depression",
+    # Extended diseases
+    "hypertension": "Hypertension",
+    "asthma": "Asthma",
+    "rheumatoid_arthritis": "Rheumatoid Arthritis",
+    "crohns_disease": "Crohn's Disease",
+    "ulcerative_colitis": "Ulcerative Colitis",
+    "multiple_sclerosis": "Multiple Sclerosis",
+    "lupus": "Systemic Lupus Erythematosus",
+    "celiac_disease": "Celiac Disease",
+    "psoriasis": "Psoriasis",
+    "migraine": "Migraine",
+    "glaucoma": "Glaucoma",
+    "osteoporosis": "Osteoporosis",
+    "gout": "Gout",
+    "bipolar_disorder": "Bipolar Disorder",
+    "schizophrenia": "Schizophrenia",
 }
+
+
+def get_disease_category(disease: str) -> tuple[str, dict]:
+    """Get the category for a disease."""
+    disease_lower = disease.lower()
+    for cat_key, cat_info in DISEASE_CATEGORIES.items():
+        if disease_lower in cat_info["diseases"]:
+            return cat_key, cat_info
+    return "other", DISEASE_CATEGORIES["other"]
+
+
+def group_diseases_by_category(prs_results: dict) -> dict:
+    """Group PRS results by disease category."""
+    grouped = {}
+    for disease, data in prs_results.items():
+        cat_key, cat_info = get_disease_category(disease)
+        if cat_key not in grouped:
+            grouped[cat_key] = {
+                "info": cat_info,
+                "diseases": []
+            }
+        grouped[cat_key]["diseases"].append((disease, data))
+
+    # Sort diseases within each category by percentile
+    for cat_key in grouped:
+        grouped[cat_key]["diseases"].sort(
+            key=lambda x: x[1].get("percentile", 0),
+            reverse=True
+        )
+
+    return grouped
 
 
 def get_risk_color(percentile: float) -> str:
@@ -366,10 +506,18 @@ def generate_html_report(prs_results: dict[str, Any], user_info: dict[str, Any])
     Returns:
         Complete HTML report as string
     """
-    report_date = datetime.now().strftime("%B %d, %Y")
+    # Generate report metadata
+    report_id = generate_report_id()
+    report_datetime = datetime.now()
+    report_date = report_datetime.strftime("%B %d, %Y")
+    report_time = report_datetime.strftime("%H:%M:%S")
+    report_timestamp = report_datetime.strftime("%Y-%m-%d %H:%M:%S UTC")
+
     patient_id = user_info.get("patient_id", "Anonymous")
     ancestry = user_info.get("ancestry", "Not specified")
     filename = user_info.get("filename", "Not specified")
+
+    verification_code = generate_verification_code(report_id, patient_id)
 
     # Sort results by percentile (highest risk first)
     sorted_diseases = sorted(
@@ -378,102 +526,202 @@ def generate_html_report(prs_results: dict[str, Any], user_info: dict[str, Any])
         reverse=True
     )
 
-    # Get top 5 elevated risks (above 75th percentile)
-    elevated_risks = [
+    # Count risk categories for summary
+    risk_counts = {"High": 0, "Elevated": 0, "Average": 0, "Low": 0, "Very Low": 0}
+    for disease, data in sorted_diseases:
+        category = data.get("risk_category", "Average")
+        if category in risk_counts:
+            risk_counts[category] += 1
+
+    # Get top 3 elevated risks
+    top_risks = [
         (disease, data) for disease, data in sorted_diseases
         if data.get("percentile", 0) >= 0.75
-    ][:5]
+    ][:3]
 
-    # Build executive summary section
-    if elevated_risks:
-        summary_items = ""
-        for disease, data in elevated_risks:
+    # Build risk summary badges
+    risk_summary_badges = ""
+    if risk_counts["High"] > 0:
+        risk_summary_badges += f'<span class="risk-badge high">{risk_counts["High"]} High</span>'
+    if risk_counts["Elevated"] > 0:
+        risk_summary_badges += f'<span class="risk-badge elevated">{risk_counts["Elevated"]} Elevated</span>'
+    if risk_counts["Average"] > 0:
+        risk_summary_badges += f'<span class="risk-badge average">{risk_counts["Average"]} Average</span>'
+    low_count = risk_counts["Low"] + risk_counts["Very Low"]
+    if low_count > 0:
+        risk_summary_badges += f'<span class="risk-badge low">{low_count} Low</span>'
+
+    # Build executive summary with top 3 risks
+    exec_summary_content = ""
+    if top_risks:
+        for disease, data in top_risks:
             display_name = DISEASE_DISPLAY_NAMES.get(disease, disease)
             percentile = data.get("percentile", 0) * 100
             category = data.get("risk_category", "Unknown")
-            color = get_risk_color(data.get("percentile", 0))
-            summary_items += f"""
-            <div class="summary-item">
-                <div class="summary-disease">{display_name}</div>
-                <div class="summary-bar-container">
-                    <div class="summary-bar" style="width: {percentile}%; background-color: {color};"></div>
+            explanation = RISK_EXPLANATIONS.get(category, {})
+
+            exec_summary_content += f"""
+            <div class="top-risk-card">
+                <div class="top-risk-header">
+                    <span class="top-risk-name">{display_name}</span>
+                    <span class="top-risk-percentile">{percentile:.0f}th percentile</span>
                 </div>
-                <div class="summary-percentile" style="color: {color};">{percentile:.0f}th percentile - {category}</div>
+                <div class="risk-spectrum">
+                    <div class="spectrum-gradient"></div>
+                    <div class="spectrum-marker" style="left: {percentile}%;"></div>
+                    <div class="spectrum-labels">
+                        <span>0%</span>
+                        <span>25%</span>
+                        <span>50%</span>
+                        <span>75%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+                <div class="risk-explanation">
+                    <strong>{explanation.get('summary', category)}</strong>
+                    <p>{explanation.get('meaning', '')}</p>
+                </div>
             </div>
             """
-        executive_summary = f"""
-        <div class="executive-summary warning">
-            <h2>Executive Summary - Elevated Risk Areas</h2>
-            <p>Based on your genetic profile, the following conditions show elevated genetic risk:</p>
-            {summary_items}
-        </div>
-        """
+        exec_summary_class = "warning" if risk_counts["High"] > 0 else "caution"
     else:
-        executive_summary = """
-        <div class="executive-summary success">
-            <h2>Executive Summary</h2>
-            <p>Based on your genetic profile, no conditions show significantly elevated genetic risk (above 75th percentile).
-            This is a positive finding, though standard preventive care recommendations still apply.</p>
+        exec_summary_content = """
+        <div class="positive-summary">
+            <div class="positive-icon">&#10003;</div>
+            <div class="positive-text">
+                <strong>No Significantly Elevated Genetic Risks Identified</strong>
+                <p>Your genetic profile does not show significantly elevated risk (above 75th percentile)
+                for any of the conditions analyzed. Continue following standard preventive care guidelines.</p>
+            </div>
         </div>
         """
+        exec_summary_class = "success"
 
-    # Build full results table
-    table_rows = ""
-    for disease, data in sorted_diseases:
-        display_name = DISEASE_DISPLAY_NAMES.get(disease, disease)
-        percentile = data.get("percentile", 0)
-        percentile_pct = percentile * 100
-        category = data.get("risk_category", "Unknown")
-        zscore = data.get("zscore", 0)
-        matched = data.get("matched_variants", 0)
-        total = data.get("total_variants", 0)
-        coverage = (matched / total * 100) if total > 0 else 0
+    # Build grouped disease sections
+    grouped = group_diseases_by_category(prs_results)
+    category_sections = ""
 
-        color = get_risk_color(percentile)
-        bg_color = get_risk_background(percentile)
+    for cat_key in ["cardiovascular", "oncology", "metabolic", "neurological", "autoimmune", "other"]:
+        if cat_key not in grouped:
+            continue
 
-        table_rows += f"""
-        <tr>
-            <td class="disease-name">{display_name}</td>
-            <td class="percentile-cell" style="background-color: {bg_color};">
-                <div class="percentile-bar-container">
-                    <div class="percentile-bar" style="width: {percentile_pct}%; background-color: {color};"></div>
-                </div>
-                <span class="percentile-text">{percentile_pct:.1f}%</span>
-            </td>
-            <td style="background-color: {bg_color}; color: {color}; font-weight: 600;">{category}</td>
-            <td>{zscore:.2f}</td>
-            <td>{matched:,} / {total:,} ({coverage:.1f}%)</td>
-        </tr>
+        cat_data = grouped[cat_key]
+        cat_info = cat_data["info"]
+        diseases = cat_data["diseases"]
+
+        disease_rows = ""
+        for disease, data in diseases:
+            display_name = DISEASE_DISPLAY_NAMES.get(disease, disease)
+            percentile = data.get("percentile", 0)
+            percentile_pct = percentile * 100
+            category = data.get("risk_category", "Unknown")
+            zscore = data.get("zscore", 0)
+            matched = data.get("matched_variants", 0)
+            total = data.get("total_variants", 0)
+            coverage = (matched / total * 100) if total > 0 else 0
+
+            color = get_risk_color(percentile)
+            bg_color = get_risk_background(percentile)
+
+            disease_rows += f"""
+            <tr>
+                <td class="disease-name">{display_name}</td>
+                <td class="spectrum-cell">
+                    <div class="mini-spectrum">
+                        <div class="mini-spectrum-bg"></div>
+                        <div class="mini-spectrum-marker" style="left: {percentile_pct}%;"></div>
+                    </div>
+                    <span class="percentile-value">{percentile_pct:.0f}%</span>
+                </td>
+                <td><span class="category-badge" style="background-color: {bg_color}; color: {color};">{category}</span></td>
+                <td class="numeric">{zscore:+.2f}</td>
+                <td class="coverage">{matched:,} / {total:,}</td>
+            </tr>
+            """
+
+        category_sections += f"""
+        <div class="category-section">
+            <div class="category-header" style="border-left-color: {cat_info['color']};">
+                <h3>{cat_info['name']}</h3>
+            </div>
+            <table class="disease-table">
+                <thead>
+                    <tr>
+                        <th>Condition</th>
+                        <th>Risk Spectrum</th>
+                        <th>Category</th>
+                        <th>Z-Score</th>
+                        <th>Variants</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {disease_rows}
+                </tbody>
+            </table>
+        </div>
         """
 
     # Build recommendations section
     recommendations_html = ""
-    for disease, data in elevated_risks[:3]:  # Top 3 elevated risks
+    for disease, data in top_risks:
         display_name = DISEASE_DISPLAY_NAMES.get(disease, disease)
         category = data.get("risk_category", "Average")
         recs = get_recommendations(disease, category)
+        percentile = data.get("percentile", 0) * 100
+        color = get_risk_color(data.get("percentile", 0))
 
         recs_list = "".join([f"<li>{rec}</li>" for rec in recs])
         recommendations_html += f"""
-        <div class="recommendation-card">
-            <h4>{display_name}</h4>
-            <ul>{recs_list}</ul>
+        <div class="recommendation-card" style="border-top-color: {color};">
+            <div class="rec-header">
+                <span class="rec-disease">{display_name}</span>
+                <span class="rec-percentile" style="color: {color};">{percentile:.0f}th percentile</span>
+            </div>
+            <ul class="rec-list">{recs_list}</ul>
         </div>
         """
 
     if not recommendations_html:
         recommendations_html = """
-        <div class="recommendation-card">
-            <h4>General Wellness</h4>
-            <ul>
-                <li>Continue regular preventive care visits</li>
-                <li>Maintain healthy diet and regular exercise</li>
-                <li>Follow age-appropriate screening guidelines</li>
-                <li>Discuss family history with your healthcare provider</li>
+        <div class="recommendation-card general">
+            <div class="rec-header">
+                <span class="rec-disease">General Wellness Recommendations</span>
+            </div>
+            <ul class="rec-list">
+                <li>Continue regular preventive care visits with your healthcare provider</li>
+                <li>Maintain a balanced diet rich in fruits, vegetables, and whole grains</li>
+                <li>Aim for at least 150 minutes of moderate physical activity weekly</li>
+                <li>Follow age-appropriate health screening guidelines</li>
+                <li>Discuss your family history with your healthcare provider</li>
             </ul>
         </div>
         """
+
+    # Build what this means section
+    what_this_means = """
+    <div class="explanation-grid">
+        <div class="explanation-card very-low">
+            <div class="exp-header"><span class="exp-dot"></span>Very Low (0-10%)</div>
+            <p>Your genetic predisposition is significantly below average. Continue standard preventive care.</p>
+        </div>
+        <div class="explanation-card low">
+            <div class="exp-header"><span class="exp-dot"></span>Low (10-25%)</div>
+            <p>Lower than typical genetic risk. Maintain healthy lifestyle habits.</p>
+        </div>
+        <div class="explanation-card average">
+            <div class="exp-header"><span class="exp-dot"></span>Average (25-75%)</div>
+            <p>Typical genetic risk for your population. Follow standard screening guidelines.</p>
+        </div>
+        <div class="explanation-card elevated">
+            <div class="exp-header"><span class="exp-dot"></span>Elevated (75-90%)</div>
+            <p>Moderately increased genetic risk. Consider discussing enhanced screening with your provider.</p>
+        </div>
+        <div class="explanation-card high">
+            <div class="exp-header"><span class="exp-dot"></span>High (90-100%)</div>
+            <p>Significantly elevated genetic risk. Specialist consultation recommended.</p>
+        </div>
+    </div>
+    """
 
     html = f"""
 <!DOCTYPE html>
@@ -481,8 +729,25 @@ def generate_html_report(prs_results: dict[str, Any], user_info: dict[str, Any])
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polygenic Risk Score Report</title>
+    <title>Polygenic Risk Score Report - {report_id}</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {{
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }}
+
         * {{
             margin: 0;
             padding: 0;
@@ -490,359 +755,754 @@ def generate_html_report(prs_results: dict[str, Any], user_info: dict[str, Any])
         }}
 
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            color: #1f2937;
-            background: #f9fafb;
+            color: var(--gray-900);
+            background: var(--gray-50);
+            font-size: 14px;
         }}
 
         .container {{
             max-width: 900px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 30px 20px;
         }}
 
-        .header {{
-            text-align: center;
-            padding: 30px;
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        /* Header */
+        .report-header {{
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1e40af 100%);
             color: white;
-            border-radius: 12px;
+            padding: 40px;
+            border-radius: 16px;
             margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
         }}
 
-        .header h1 {{
-            font-size: 28px;
-            margin-bottom: 10px;
+        .report-header::before {{
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
         }}
 
-        .header .subtitle {{
-            font-size: 16px;
-            opacity: 0.9;
+        .header-content {{
+            position: relative;
+            z-index: 1;
         }}
 
-        .logo-placeholder {{
-            width: 80px;
-            height: 80px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 50%;
-            margin: 0 auto 20px;
+        .header-top {{
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }}
+
+        .logo-section {{
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 32px;
-        }}
-
-        .patient-info {{
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
         }}
 
-        .info-item {{
-            padding: 10px;
+        .logo {{
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            backdrop-filter: blur(10px);
         }}
 
-        .info-label {{
-            font-size: 12px;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }}
-
-        .info-value {{
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-        }}
-
-        .executive-summary {{
-            padding: 25px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }}
-
-        .executive-summary.warning {{
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-        }}
-
-        .executive-summary.success {{
-            background: #d1fae5;
-            border-left: 4px solid #10b981;
-        }}
-
-        .executive-summary h2 {{
-            margin-bottom: 15px;
-            font-size: 20px;
-        }}
-
-        .summary-item {{
-            margin: 15px 0;
-        }}
-
-        .summary-disease {{
-            font-weight: 600;
-            margin-bottom: 5px;
-        }}
-
-        .summary-bar-container {{
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 5px;
-        }}
-
-        .summary-bar {{
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }}
-
-        .summary-percentile {{
-            font-size: 14px;
-            font-weight: 600;
-        }}
-
-        .section {{
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }}
-
-        .section h2 {{
-            font-size: 20px;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e5e7eb;
-        }}
-
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }}
-
-        th {{
-            background: #f3f4f6;
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            border-bottom: 2px solid #e5e7eb;
-        }}
-
-        td {{
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
-        }}
-
-        .disease-name {{
-            font-weight: 600;
-        }}
-
-        .percentile-cell {{
-            min-width: 150px;
-        }}
-
-        .percentile-bar-container {{
-            height: 6px;
-            background: #e5e7eb;
-            border-radius: 3px;
-            overflow: hidden;
+        .report-title {{
+            font-size: 26px;
+            font-weight: 700;
             margin-bottom: 4px;
         }}
 
-        .percentile-bar {{
-            height: 100%;
-            border-radius: 3px;
+        .report-subtitle {{
+            font-size: 14px;
+            opacity: 0.9;
         }}
 
-        .percentile-text {{
+        .qr-placeholder {{
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }}
+
+        .qr-placeholder .qr-grid {{
+            width: 50px;
+            height: 50px;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255,255,255,0.3) 0px,
+                rgba(255,255,255,0.3) 5px,
+                transparent 5px,
+                transparent 10px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                rgba(255,255,255,0.3) 0px,
+                rgba(255,255,255,0.3) 5px,
+                transparent 5px,
+                transparent 10px
+            );
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }}
+
+        .header-meta {{
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }}
+
+        .meta-item {{
+            text-align: center;
+        }}
+
+        .meta-label {{
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }}
+
+        .meta-value {{
+            font-size: 14px;
+            font-weight: 600;
+        }}
+
+        /* Risk Summary Badges */
+        .risk-summary {{
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }}
+
+        .risk-badge {{
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }}
+
+        .risk-badge.high {{
+            background: #fee2e2;
+            color: #991b1b;
+        }}
+
+        .risk-badge.elevated {{
+            background: #ffedd5;
+            color: #9a3412;
+        }}
+
+        .risk-badge.average {{
+            background: #fef9c3;
+            color: #854d0e;
+        }}
+
+        .risk-badge.low {{
+            background: #dcfce7;
+            color: #166534;
+        }}
+
+        /* Executive Summary */
+        .executive-summary {{
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }}
+
+        .executive-summary.warning {{
+            border-left: 4px solid var(--danger);
+        }}
+
+        .executive-summary.caution {{
+            border-left: 4px solid var(--warning);
+        }}
+
+        .executive-summary.success {{
+            border-left: 4px solid var(--success);
+        }}
+
+        .exec-title {{
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--gray-900);
+        }}
+
+        .top-risk-card {{
+            background: var(--gray-50);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }}
+
+        .top-risk-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }}
+
+        .top-risk-name {{
+            font-weight: 600;
+            font-size: 16px;
+        }}
+
+        .top-risk-percentile {{
+            font-weight: 700;
+            color: var(--danger);
+        }}
+
+        /* Risk Spectrum */
+        .risk-spectrum {{
+            position: relative;
+            margin-bottom: 15px;
+        }}
+
+        .spectrum-gradient {{
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(to right,
+                #22c55e 0%,
+                #22c55e 10%,
+                #86efac 10%,
+                #86efac 25%,
+                #fbbf24 25%,
+                #fbbf24 75%,
+                #fb923c 75%,
+                #fb923c 90%,
+                #ef4444 90%,
+                #ef4444 100%
+            );
+        }}
+
+        .spectrum-marker {{
+            position: absolute;
+            top: -4px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid var(--gray-900);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }}
+
+        .spectrum-labels {{
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 10px;
+            color: var(--gray-500);
+        }}
+
+        .risk-explanation {{
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+        }}
+
+        .risk-explanation strong {{
+            display: block;
+            margin-bottom: 4px;
+            color: var(--gray-900);
+        }}
+
+        .risk-explanation p {{
+            color: var(--gray-500);
+            margin: 0;
+        }}
+
+        .positive-summary {{
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }}
+
+        .positive-icon {{
+            width: 50px;
+            height: 50px;
+            background: #dcfce7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--success);
+            flex-shrink: 0;
+        }}
+
+        .positive-text strong {{
+            display: block;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }}
+
+        .positive-text p {{
+            color: var(--gray-500);
+            margin: 0;
+        }}
+
+        /* Section styling */
+        .section {{
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }}
+
+        .section-title {{
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--gray-200);
+            color: var(--gray-900);
+        }}
+
+        /* Category Sections */
+        .category-section {{
+            margin-bottom: 25px;
+        }}
+
+        .category-header {{
+            padding: 12px 15px;
+            background: var(--gray-50);
+            border-left: 4px solid;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 12px;
+        }}
+
+        .category-header h3 {{
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin: 0;
+        }}
+
+        /* Disease Table */
+        .disease-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }}
+
+        .disease-table th {{
+            text-align: left;
+            padding: 10px 12px;
+            font-weight: 600;
+            color: var(--gray-500);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--gray-200);
+        }}
+
+        .disease-table td {{
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-100);
+            vertical-align: middle;
+        }}
+
+        .disease-table tr:last-child td {{
+            border-bottom: none;
+        }}
+
+        .disease-name {{
+            font-weight: 500;
+        }}
+
+        .spectrum-cell {{
+            min-width: 140px;
+        }}
+
+        .mini-spectrum {{
+            position: relative;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }}
+
+        .mini-spectrum-bg {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 4px;
+            background: linear-gradient(to right,
+                #22c55e 0%, #86efac 25%, #fbbf24 50%, #fb923c 75%, #ef4444 100%
+            );
+        }}
+
+        .mini-spectrum-marker {{
+            position: absolute;
+            top: -2px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 2px solid var(--gray-900);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }}
+
+        .percentile-value {{
+            font-size: 11px;
+            color: var(--gray-500);
+        }}
+
+        .category-badge {{
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }}
+
+        .numeric {{
+            font-family: 'SF Mono', Monaco, monospace;
             font-size: 12px;
-            color: #6b7280;
         }}
 
-        .recommendations {{
+        .coverage {{
+            font-size: 11px;
+            color: var(--gray-500);
+        }}
+
+        /* Explanation Grid */
+        .explanation-grid {{
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }}
+
+        .explanation-card {{
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 11px;
+        }}
+
+        .explanation-card.very-low {{
+            background: #dcfce7;
+        }}
+
+        .explanation-card.low {{
+            background: #ecfdf5;
+        }}
+
+        .explanation-card.average {{
+            background: #fef9c3;
+        }}
+
+        .explanation-card.elevated {{
+            background: #ffedd5;
+        }}
+
+        .explanation-card.high {{
+            background: #fee2e2;
+        }}
+
+        .exp-header {{
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }}
+
+        .exp-dot {{
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }}
+
+        .very-low .exp-dot {{ background: #22c55e; }}
+        .low .exp-dot {{ background: #86efac; }}
+        .average .exp-dot {{ background: #fbbf24; }}
+        .elevated .exp-dot {{ background: #fb923c; }}
+        .high .exp-dot {{ background: #ef4444; }}
+
+        .explanation-card p {{
+            color: var(--gray-700);
+            margin: 0;
+            line-height: 1.4;
+        }}
+
+        /* Recommendations */
+        .recommendations-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
         }}
 
         .recommendation-card {{
-            background: #f9fafb;
+            background: var(--gray-50);
+            border-radius: 10px;
             padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
+            border-top: 4px solid var(--gray-300);
         }}
 
-        .recommendation-card h4 {{
-            margin-bottom: 12px;
-            color: #1e40af;
+        .recommendation-card.general {{
+            border-top-color: var(--primary);
         }}
 
-        .recommendation-card ul {{
-            margin-left: 20px;
-        }}
-
-        .recommendation-card li {{
-            margin-bottom: 8px;
-            color: #4b5563;
-        }}
-
-        .disclaimer {{
-            background: #fee2e2;
-            border: 1px solid #fca5a5;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 30px;
-        }}
-
-        .disclaimer h3 {{
-            color: #dc2626;
-            margin-bottom: 10px;
-        }}
-
-        .disclaimer p {{
-            font-size: 14px;
-            color: #7f1d1d;
-        }}
-
-        .footer {{
-            text-align: center;
-            padding: 20px;
-            color: #6b7280;
-            font-size: 12px;
-        }}
-
-        .legend {{
+        .rec-header {{
             display: flex;
-            gap: 20px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }}
-
-        .legend-item {{
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
+            margin-bottom: 15px;
+        }}
+
+        .rec-disease {{
+            font-weight: 600;
+            font-size: 15px;
+        }}
+
+        .rec-percentile {{
+            font-weight: 700;
             font-size: 13px;
         }}
 
-        .legend-color {{
-            width: 16px;
-            height: 16px;
-            border-radius: 4px;
+        .rec-list {{
+            margin: 0;
+            padding-left: 20px;
         }}
 
+        .rec-list li {{
+            margin-bottom: 8px;
+            color: var(--gray-700);
+            line-height: 1.5;
+        }}
+
+        /* Disclaimer */
+        .disclaimer {{
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 25px;
+        }}
+
+        .disclaimer-header {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }}
+
+        .disclaimer-icon {{
+            width: 24px;
+            height: 24px;
+            background: var(--danger);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }}
+
+        .disclaimer-title {{
+            font-size: 16px;
+            font-weight: 700;
+            color: #991b1b;
+        }}
+
+        .disclaimer p {{
+            color: #7f1d1d;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 0;
+        }}
+
+        /* Footer */
+        .report-footer {{
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--gray-500);
+            font-size: 11px;
+            border-top: 1px solid var(--gray-200);
+            margin-top: 30px;
+        }}
+
+        .footer-verification {{
+            background: var(--gray-100);
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: 'SF Mono', Monaco, monospace;
+            margin-bottom: 12px;
+        }}
+
+        .footer-links {{
+            margin-top: 12px;
+        }}
+
+        /* Print Styles */
         @media print {{
             body {{
                 background: white;
+                font-size: 11pt;
             }}
+
             .container {{
                 padding: 0;
+                max-width: 100%;
             }}
-            .section {{
+
+            .section, .executive-summary {{
                 box-shadow: none;
-                border: 1px solid #e5e7eb;
+                border: 1px solid var(--gray-200);
+                page-break-inside: avoid;
             }}
+
+            .report-header {{
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }}
+
+            .category-section {{
+                page-break-inside: avoid;
+            }}
+
+            .explanation-grid {{
+                grid-template-columns: repeat(5, 1fr);
+            }}
+        }}
+
+        @page {{
+            size: A4;
+            margin: 1.5cm;
         }}
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="logo-placeholder">PRS</div>
-            <h1>Polygenic Risk Score Report</h1>
-            <p class="subtitle">Clinical Genetic Risk Assessment</p>
+        <!-- Header -->
+        <div class="report-header">
+            <div class="header-content">
+                <div class="header-top">
+                    <div class="logo-section">
+                        <div class="logo">PRS</div>
+                        <div>
+                            <div class="report-title">Polygenic Risk Score Report</div>
+                            <div class="report-subtitle">Clinical Genetic Risk Assessment</div>
+                        </div>
+                    </div>
+                    <div class="qr-placeholder">
+                        <div class="qr-grid"></div>
+                        <span>Scan to verify</span>
+                    </div>
+                </div>
+                <div class="header-meta">
+                    <div class="meta-item">
+                        <div class="meta-label">Report ID</div>
+                        <div class="meta-value">{report_id}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Generated</div>
+                        <div class="meta-value">{report_date}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Patient ID</div>
+                        <div class="meta-value">{patient_id}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Ancestry</div>
+                        <div class="meta-value">{ancestry}</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="patient-info">
-            <div class="info-item">
-                <div class="info-label">Report Date</div>
-                <div class="info-value">{report_date}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Patient ID</div>
-                <div class="info-value">{patient_id}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Ancestry</div>
-                <div class="info-value">{ancestry}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Source File</div>
-                <div class="info-value">{filename}</div>
-            </div>
+        <!-- Risk Summary Badges -->
+        <div class="risk-summary">
+            {risk_summary_badges}
         </div>
 
-        {executive_summary}
+        <!-- Executive Summary -->
+        <div class="executive-summary {exec_summary_class}">
+            <div class="exec-title">Executive Summary - Priority Findings</div>
+            {exec_summary_content}
+        </div>
 
+        <!-- What This Means Section -->
         <div class="section">
-            <h2>Complete Risk Assessment</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Condition</th>
-                        <th>Percentile</th>
-                        <th>Risk Category</th>
-                        <th>Z-Score</th>
-                        <th>Variant Coverage</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {table_rows}
-                </tbody>
-            </table>
-            <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #22c55e;"></div>
-                    <span>Low Risk (&lt;25%)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #eab308;"></div>
-                    <span>Average (25-75%)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #f97316;"></div>
-                    <span>Elevated (75-90%)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #ef4444;"></div>
-                    <span>High Risk (&gt;90%)</span>
-                </div>
-            </div>
+            <div class="section-title">Understanding Your Risk Categories</div>
+            {what_this_means}
         </div>
 
+        <!-- Complete Results by Category -->
         <div class="section">
-            <h2>Clinical Recommendations</h2>
-            <div class="recommendations">
+            <div class="section-title">Complete Risk Assessment by Category</div>
+            {category_sections}
+        </div>
+
+        <!-- Recommendations -->
+        <div class="section">
+            <div class="section-title">Personalized Clinical Recommendations</div>
+            <div class="recommendations-grid">
                 {recommendations_html}
             </div>
         </div>
 
+        <!-- Disclaimer -->
         <div class="disclaimer">
-            <h3>Important Clinical Disclaimer</h3>
+            <div class="disclaimer-header">
+                <div class="disclaimer-icon">!</div>
+                <div class="disclaimer-title">Important Clinical Disclaimer</div>
+            </div>
             <p>
                 <strong>This report is NOT a medical diagnosis.</strong> Polygenic risk scores indicate
-                genetic predisposition and do not account for lifestyle factors, family history, or
-                environmental influences. These results should be interpreted by a qualified healthcare
-                provider in the context of your complete medical history. Do not make medical decisions
-                based solely on this report. Always consult with your physician before starting any
-                screening program or making changes to your healthcare plan.
+                genetic predisposition based on current scientific knowledge and do not account for
+                lifestyle factors, family history, environmental influences, or gene-environment interactions.
+                These results should be interpreted by a qualified healthcare provider in the context of your
+                complete medical history. Do not make medical decisions based solely on this report.
+                Always consult with your physician before starting any screening program or making changes
+                to your healthcare plan. Genetic risk is only one component of overall disease risk.
             </p>
         </div>
 
-        <div class="footer">
-            <p>Generated by Polygenic Risk Score Calculator | {report_date}</p>
-            <p>Based on PGS Catalog scores | Population normalization: {ancestry}</p>
+        <!-- Footer -->
+        <div class="report-footer">
+            <div class="footer-verification">
+                Verification Code: {verification_code}
+            </div>
+            <p>Generated: {report_timestamp} | Source: {filename}</p>
+            <p class="footer-links">
+                Based on validated scores from <strong>PGS Catalog</strong> (www.pgscatalog.org)<br>
+                Population normalization: {ancestry}
+            </p>
         </div>
     </div>
 </body>
@@ -875,27 +1535,88 @@ def generate_pdf_report(
     pdf_css = CSS(string="""
         @page {
             size: A4;
-            margin: 2cm;
+            margin: 1.5cm 2cm;
+
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 9pt;
+                color: #6b7280;
+            }
+
+            @bottom-right {
+                content: "Confidential Medical Report";
+                font-size: 8pt;
+                color: #9ca3af;
+            }
+        }
+
+        @page :first {
+            @bottom-center {
+                content: none;
+            }
+            @bottom-right {
+                content: none;
+            }
         }
 
         body {
-            font-size: 11pt;
+            font-size: 10pt;
         }
 
-        .section {
+        .container {
+            padding: 0;
+        }
+
+        .section, .executive-summary {
+            box-shadow: none;
+            border: 1px solid #e5e7eb;
+            page-break-inside: avoid;
+            margin-bottom: 20px;
+        }
+
+        .category-section {
             page-break-inside: avoid;
         }
 
-        table {
+        .disease-table {
             page-break-inside: auto;
         }
 
-        tr {
+        .disease-table tr {
+            page-break-inside: avoid;
+        }
+
+        .recommendation-card {
             page-break-inside: avoid;
         }
 
         .disclaimer {
             page-break-inside: avoid;
+        }
+
+        .explanation-grid {
+            page-break-inside: avoid;
+        }
+
+        .report-header {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .spectrum-gradient, .mini-spectrum-bg {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .risk-badge, .category-badge, .exp-dot {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* Ensure gradient backgrounds print correctly */
+        .explanation-card {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
     """)
 

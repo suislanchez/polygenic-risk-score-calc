@@ -42,6 +42,11 @@ DISEASE_CATALOG = {
         "name": "Stroke",
         "category": "cardiovascular",
     },
+    "hypertension": {
+        "pgs_id": "PGS000012",
+        "name": "Hypertension",
+        "category": "cardiovascular",
+    },
     # Oncology
     "breast_cancer": {
         "pgs_id": "PGS000004",
@@ -69,7 +74,12 @@ DISEASE_CATALOG = {
         "name": "Obesity (BMI)",
         "category": "metabolic",
     },
-    # Neurological
+    "gout": {
+        "pgs_id": "PGS000048",
+        "name": "Gout",
+        "category": "metabolic",
+    },
+    # Neurological / Psychiatric
     "alzheimers": {
         "pgs_id": "PGS000334",
         "name": "Alzheimer's Disease",
@@ -78,7 +88,76 @@ DISEASE_CATALOG = {
     "depression": {
         "pgs_id": "PGS000297",
         "name": "Major Depression",
+        "category": "psychiatric",
+    },
+    "migraine": {
+        "pgs_id": "PGS000040",
+        "name": "Migraine",
         "category": "neurological",
+    },
+    "bipolar_disorder": {
+        "pgs_id": "PGS000049",
+        "name": "Bipolar Disorder",
+        "category": "psychiatric",
+    },
+    "schizophrenia": {
+        "pgs_id": "PGS000052",
+        "name": "Schizophrenia",
+        "category": "psychiatric",
+    },
+    # Autoimmune / Inflammatory
+    "rheumatoid_arthritis": {
+        "pgs_id": "PGS000024",
+        "name": "Rheumatoid Arthritis",
+        "category": "autoimmune",
+    },
+    "crohns_disease": {
+        "pgs_id": "PGS000025",
+        "name": "Crohn's Disease",
+        "category": "autoimmune",
+    },
+    "ulcerative_colitis": {
+        "pgs_id": "PGS000026",
+        "name": "Ulcerative Colitis",
+        "category": "autoimmune",
+    },
+    "multiple_sclerosis": {
+        "pgs_id": "PGS000028",
+        "name": "Multiple Sclerosis",
+        "category": "autoimmune",
+    },
+    "lupus": {
+        "pgs_id": "PGS000030",
+        "name": "Systemic Lupus Erythematosus",
+        "category": "autoimmune",
+    },
+    "celiac_disease": {
+        "pgs_id": "PGS000035",
+        "name": "Celiac Disease",
+        "category": "autoimmune",
+    },
+    "psoriasis": {
+        "pgs_id": "PGS000036",
+        "name": "Psoriasis",
+        "category": "autoimmune",
+    },
+    # Respiratory
+    "asthma": {
+        "pgs_id": "PGS000019",
+        "name": "Asthma",
+        "category": "respiratory",
+    },
+    # Ophthalmologic
+    "glaucoma": {
+        "pgs_id": "PGS000042",
+        "name": "Glaucoma",
+        "category": "ophthalmologic",
+    },
+    # Musculoskeletal
+    "osteoporosis": {
+        "pgs_id": "PGS000045",
+        "name": "Osteoporosis",
+        "category": "musculoskeletal",
     },
 }
 

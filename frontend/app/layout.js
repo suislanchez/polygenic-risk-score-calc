@@ -1,3 +1,5 @@
+import './globals.css'
+
 export const metadata = {
   title: 'PRS Calculator - Polygenic Risk Score',
   description: 'Calculate your genetic risk for multiple diseases using validated PGS Catalog scores',
