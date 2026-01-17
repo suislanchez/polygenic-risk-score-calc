@@ -260,7 +260,6 @@ def create_interface() -> gr.Blocks:
                     label="Results Summary",
                     lines=20,
                     max_lines=30,
-                    show_copy_button=True,
                 )
 
         with gr.Row():
