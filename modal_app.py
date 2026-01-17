@@ -13,15 +13,26 @@ import modal
 # Create Modal app
 app = modal.App("polygenic-risk-score-calc")
 
-# Define container image with dependencies
-image = modal.Image.debian_slim(python_version="3.11").pip_install(
-    "pandas>=2.0",
-    "numpy>=1.24",
-    "scipy>=1.11",
-    "requests>=2.31",
-    "weasyprint>=60.0",
-    "pyliftover>=0.4",
-    "fastapi>=0.100.0",
+# Define container image with dependencies and copy local code
+image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .pip_install(
+        "pandas>=2.0",
+        "numpy>=1.24",
+        "scipy>=1.11",
+        "requests>=2.31",
+        "weasyprint>=60.0",
+        "pyliftover>=0.4",
+        "fastapi>=0.100.0",
+    )
+    .add_local_dir(
+        local_path=Path(__file__).parent / "src",
+        remote_path="/root/src",
+    )
+    .add_local_dir(
+        local_path=Path(__file__).parent / "data",
+        remote_path="/root/data",
+    )
 )
 
 
@@ -46,6 +57,9 @@ def compute_prs(
     Returns:
         Dictionary with PRS results and metadata
     """
+    import sys
+    sys.path.insert(0, "/root")
+
     # Write file content to temp file
     with tempfile.NamedTemporaryFile(
         suffix=Path(filename).suffix,
@@ -115,6 +129,7 @@ def compute_prs(
 @app.function(
     image=image,
     timeout=120,
+    
 )
 def generate_report_pdf(
     prs_results: dict[str, Any],
@@ -130,6 +145,8 @@ def generate_report_pdf(
     Returns:
         PDF file content as bytes
     """
+    import sys
+    sys.path.insert(0, "/root")
     from src.report_generator import generate_pdf_report
 
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
@@ -147,6 +164,7 @@ def generate_report_pdf(
 @app.function(
     image=image,
     timeout=900,  # 15 minutes for full workflow
+    
 )
 def process_full(
     file_content: bytes,
@@ -201,6 +219,7 @@ def process_full(
     image=image,
     timeout=600,
     memory=2048,
+    
 )
 @modal.fastapi_endpoint(method="POST")
 def compute_prs_web(request: dict) -> dict:
