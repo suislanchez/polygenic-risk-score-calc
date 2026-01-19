@@ -25,8 +25,11 @@ CACHE_DIR = Path(__file__).parent.parent / "data" / "cache"
 
 # Disease catalog: maps disease names to PGS IDs
 # These are high-quality, validated scores from PGSCatalog
+# Expanded to 50 diseases across multiple categories
 DISEASE_CATALOG = {
-    # Cardiovascular
+    # =====================
+    # CARDIOVASCULAR (8)
+    # =====================
     "cad": {
         "pgs_id": "PGS000018",
         "name": "Coronary Artery Disease",
@@ -47,7 +50,29 @@ DISEASE_CATALOG = {
         "name": "Hypertension",
         "category": "cardiovascular",
     },
-    # Oncology
+    "heart_failure": {
+        "pgs_id": "PGS000115",
+        "name": "Heart Failure",
+        "category": "cardiovascular",
+    },
+    "venous_thromboembolism": {
+        "pgs_id": "PGS000043",
+        "name": "Venous Thromboembolism",
+        "category": "cardiovascular",
+    },
+    "aortic_aneurysm": {
+        "pgs_id": "PGS000081",
+        "name": "Aortic Aneurysm",
+        "category": "cardiovascular",
+    },
+    "peripheral_artery_disease": {
+        "pgs_id": "PGS000117",
+        "name": "Peripheral Artery Disease",
+        "category": "cardiovascular",
+    },
+    # =====================
+    # ONCOLOGY (12)
+    # =====================
     "breast_cancer": {
         "pgs_id": "PGS000004",
         "name": "Breast Cancer",
@@ -63,10 +88,62 @@ DISEASE_CATALOG = {
         "name": "Colorectal Cancer",
         "category": "oncology",
     },
-    # Metabolic
+    "lung_cancer": {
+        "pgs_id": "PGS000070",
+        "name": "Lung Cancer",
+        "category": "oncology",
+    },
+    "pancreatic_cancer": {
+        "pgs_id": "PGS000058",
+        "name": "Pancreatic Cancer",
+        "category": "oncology",
+    },
+    "ovarian_cancer": {
+        "pgs_id": "PGS000054",
+        "name": "Ovarian Cancer",
+        "category": "oncology",
+    },
+    "melanoma": {
+        "pgs_id": "PGS000066",
+        "name": "Melanoma",
+        "category": "oncology",
+    },
+    "bladder_cancer": {
+        "pgs_id": "PGS000068",
+        "name": "Bladder Cancer",
+        "category": "oncology",
+    },
+    "kidney_cancer": {
+        "pgs_id": "PGS000074",
+        "name": "Kidney Cancer",
+        "category": "oncology",
+    },
+    "thyroid_cancer": {
+        "pgs_id": "PGS000082",
+        "name": "Thyroid Cancer",
+        "category": "oncology",
+    },
+    "endometrial_cancer": {
+        "pgs_id": "PGS000061",
+        "name": "Endometrial Cancer",
+        "category": "oncology",
+    },
+    "testicular_cancer": {
+        "pgs_id": "PGS000078",
+        "name": "Testicular Cancer",
+        "category": "oncology",
+    },
+    # =====================
+    # METABOLIC (6)
+    # =====================
     "t2d": {
         "pgs_id": "PGS000014",
         "name": "Type 2 Diabetes",
+        "category": "metabolic",
+    },
+    "t1d": {
+        "pgs_id": "PGS000021",
+        "name": "Type 1 Diabetes",
         "category": "metabolic",
     },
     "obesity": {
@@ -79,21 +156,56 @@ DISEASE_CATALOG = {
         "name": "Gout",
         "category": "metabolic",
     },
-    # Neurological / Psychiatric
+    "nafld": {
+        "pgs_id": "PGS000113",
+        "name": "Non-Alcoholic Fatty Liver Disease",
+        "category": "metabolic",
+    },
+    "hyperlipidemia": {
+        "pgs_id": "PGS000688",
+        "name": "Hyperlipidemia",
+        "category": "metabolic",
+    },
+    # =====================
+    # NEUROLOGICAL (6)
+    # =====================
     "alzheimers": {
         "pgs_id": "PGS000334",
         "name": "Alzheimer's Disease",
         "category": "neurological",
     },
-    "depression": {
-        "pgs_id": "PGS000297",
-        "name": "Major Depression",
-        "category": "psychiatric",
+    "parkinsons": {
+        "pgs_id": "PGS000089",
+        "name": "Parkinson's Disease",
+        "category": "neurological",
     },
     "migraine": {
         "pgs_id": "PGS000040",
         "name": "Migraine",
         "category": "neurological",
+    },
+    "epilepsy": {
+        "pgs_id": "PGS000086",
+        "name": "Epilepsy",
+        "category": "neurological",
+    },
+    "als": {
+        "pgs_id": "PGS000093",
+        "name": "Amyotrophic Lateral Sclerosis",
+        "category": "neurological",
+    },
+    "restless_legs": {
+        "pgs_id": "PGS000088",
+        "name": "Restless Legs Syndrome",
+        "category": "neurological",
+    },
+    # =====================
+    # PSYCHIATRIC (7)
+    # =====================
+    "depression": {
+        "pgs_id": "PGS000297",
+        "name": "Major Depression",
+        "category": "psychiatric",
     },
     "bipolar_disorder": {
         "pgs_id": "PGS000049",
@@ -105,7 +217,29 @@ DISEASE_CATALOG = {
         "name": "Schizophrenia",
         "category": "psychiatric",
     },
-    # Autoimmune / Inflammatory
+    "adhd": {
+        "pgs_id": "PGS000091",
+        "name": "ADHD",
+        "category": "psychiatric",
+    },
+    "anxiety": {
+        "pgs_id": "PGS000099",
+        "name": "Anxiety Disorder",
+        "category": "psychiatric",
+    },
+    "ptsd": {
+        "pgs_id": "PGS000100",
+        "name": "PTSD",
+        "category": "psychiatric",
+    },
+    "insomnia": {
+        "pgs_id": "PGS000108",
+        "name": "Insomnia",
+        "category": "psychiatric",
+    },
+    # =====================
+    # AUTOIMMUNE (7)
+    # =====================
     "rheumatoid_arthritis": {
         "pgs_id": "PGS000024",
         "name": "Rheumatoid Arthritis",
@@ -141,23 +275,83 @@ DISEASE_CATALOG = {
         "name": "Psoriasis",
         "category": "autoimmune",
     },
-    # Respiratory
+    # =====================
+    # RESPIRATORY (2)
+    # =====================
     "asthma": {
         "pgs_id": "PGS000019",
         "name": "Asthma",
         "category": "respiratory",
     },
-    # Ophthalmologic
+    "copd": {
+        "pgs_id": "PGS000116",
+        "name": "COPD",
+        "category": "respiratory",
+    },
+    # =====================
+    # OPHTHALMOLOGIC (2)
+    # =====================
     "glaucoma": {
         "pgs_id": "PGS000042",
         "name": "Glaucoma",
         "category": "ophthalmologic",
     },
-    # Musculoskeletal
+    "macular_degeneration": {
+        "pgs_id": "PGS000056",
+        "name": "Age-Related Macular Degeneration",
+        "category": "ophthalmologic",
+    },
+    # =====================
+    # MUSCULOSKELETAL (2)
+    # =====================
     "osteoporosis": {
         "pgs_id": "PGS000045",
         "name": "Osteoporosis",
         "category": "musculoskeletal",
+    },
+    "osteoarthritis": {
+        "pgs_id": "PGS000107",
+        "name": "Osteoarthritis",
+        "category": "musculoskeletal",
+    },
+    # =====================
+    # DERMATOLOGIC (2)
+    # =====================
+    "eczema": {
+        "pgs_id": "PGS000037",
+        "name": "Atopic Dermatitis / Eczema",
+        "category": "dermatologic",
+    },
+    "vitiligo": {
+        "pgs_id": "PGS000034",
+        "name": "Vitiligo",
+        "category": "dermatologic",
+    },
+    # =====================
+    # RENAL (2)
+    # =====================
+    "chronic_kidney_disease": {
+        "pgs_id": "PGS000110",
+        "name": "Chronic Kidney Disease",
+        "category": "renal",
+    },
+    "kidney_stones": {
+        "pgs_id": "PGS000112",
+        "name": "Kidney Stones",
+        "category": "renal",
+    },
+    # =====================
+    # ENDOCRINE (2)
+    # =====================
+    "hypothyroidism": {
+        "pgs_id": "PGS000095",
+        "name": "Hypothyroidism",
+        "category": "endocrine",
+    },
+    "hyperthyroidism": {
+        "pgs_id": "PGS000096",
+        "name": "Hyperthyroidism",
+        "category": "endocrine",
     },
 }
 
