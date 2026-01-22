@@ -858,8 +858,39 @@ export default function MethodologyPage() {
             ancestry-aware population normalization.
           </p>
 
+          {/* Authors */}
           <div style={{
             marginTop: '20px',
+            padding: '16px 20px',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '8px',
+            backdropFilter: 'blur(10px)',
+          }}>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Authors
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', fontSize: '0.95rem' }}>
+              <div>
+                <span style={{ fontWeight: '600' }}>Luis Sanchez</span>
+                <span style={{ color: 'rgba(255,255,255,0.7)' }}> · UC Berkeley</span>
+                <br />
+                <a href="mailto:luisanchez@berkeley.edu" style={{ color: '#fcd34d', fontSize: '0.85rem' }}>
+                  luisanchez@berkeley.edu
+                </a>
+              </div>
+              <div>
+                <span style={{ fontWeight: '600' }}>Shubhankar Tripathy</span>
+                <span style={{ color: 'rgba(255,255,255,0.7)' }}> · Stanford / UMass</span>
+                <br />
+                <a href="mailto:stripathy@umass.edu" style={{ color: '#fcd34d', fontSize: '0.85rem' }}>
+                  stripathy@umass.edu
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            marginTop: '16px',
             display: 'flex',
             flexWrap: 'wrap',
             gap: '20px',
