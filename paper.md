@@ -12,9 +12,14 @@ authors:
   - name: Luis Sanchez
     orcid: 0000-0000-0000-0000
     affiliation: 1
+  - name: Shubhankar Tripathy
+    orcid: 0000-0000-0000-0000
+    affiliation: 2
 affiliations:
-  - name: Independent Researcher
+  - name: University of California, Berkeley
     index: 1
+  - name: Stanford University
+    index: 2
 date: 22 January 2026
 bibliography: paper.bib
 ---

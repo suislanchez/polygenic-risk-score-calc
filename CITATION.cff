@@ -10,6 +10,10 @@ license: MIT
 authors:
   - family-names: Sanchez
     given-names: Luis
+    affiliation: University of California, Berkeley
+  - family-names: Tripathy
+    given-names: Shubhankar
+    affiliation: Stanford University
 keywords:
   - polygenic risk scores
   - genomics
