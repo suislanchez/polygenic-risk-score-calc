@@ -1,3 +1,6 @@
+/* Import design system variables */
+@import '../styles/variables.css';
+
 /* Global styles for PRS Calculator */
 
 * {

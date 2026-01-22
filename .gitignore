@@ -32,3 +32,9 @@ stripe_key.txt
 # Reports output
 reports/
 *.pdf
+
+# Next.js
+frontend/.next/
+frontend/node_modules/
+.next/
+node_modules/
