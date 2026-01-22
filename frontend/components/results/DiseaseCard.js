@@ -80,6 +80,50 @@ function RiskBar({ percentile, riskCategory, showLabels = true }) {
 }
 
 /**
+ * Match Quality Indicator Component
+ */
+function MatchQualityIndicator({ matchRate }) {
+  let quality, color, bgColor;
+
+  if (matchRate >= 80) {
+    quality = 'High';
+    color = '#16a34a';
+    bgColor = '#dcfce7';
+  } else if (matchRate >= 60) {
+    quality = 'Good';
+    color = '#ca8a04';
+    bgColor = '#fef9c3';
+  } else if (matchRate >= 40) {
+    quality = 'Moderate';
+    color = '#ea580c';
+    bgColor = '#ffedd5';
+  } else {
+    quality = 'Low';
+    color = '#dc2626';
+    bgColor = '#fee2e2';
+  }
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        padding: '2px 8px',
+        background: bgColor,
+        color: color,
+        borderRadius: '10px',
+        fontSize: '0.7rem',
+        fontWeight: '600',
+      }}
+      title={`${matchRate.toFixed(1)}% of scoring variants matched in your DNA file`}
+    >
+      {quality} Match
+    </span>
+  );
+}
+
+/**
  * Expanded Details Section
  */
 function ExpandedDetails({ disease, data, riskCategory }) {
@@ -99,11 +143,17 @@ function ExpandedDetails({ disease, data, riskCategory }) {
   const diseaseKey = disease.toLowerCase().replace(/\s+/g, '_');
   const relatedGenes = geneInfo[diseaseKey] || [];
 
+  // Build PGS Catalog URL if we have the PGS ID
+  const pgsId = data.pgs_id;
+  const pgsCatalogUrl = pgsId
+    ? `https://www.pgscatalog.org/score/${pgsId}/`
+    : 'https://www.pgscatalog.org/';
+
   // External links
   const links = [
     {
-      label: 'PGS Catalog',
-      url: 'https://www.pgscatalog.org/',
+      label: pgsId ? `PGS Catalog (${pgsId})` : 'PGS Catalog',
+      url: pgsCatalogUrl,
       icon: (
         <svg
           width="14"
@@ -199,7 +249,7 @@ function ExpandedDetails({ disease, data, riskCategory }) {
             Z-Score
           </div>
           <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#1e293b' }}>
-            {data.z_score?.toFixed(2) || 'N/A'}
+            {data.z_score?.toFixed(2) || data.zscore?.toFixed(2) || 'N/A'}
           </div>
         </div>
         <div
@@ -214,7 +264,22 @@ function ExpandedDetails({ disease, data, riskCategory }) {
             Raw Score
           </div>
           <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#1e293b' }}>
-            {data.raw_score?.toFixed(4) || 'N/A'}
+            {data.raw_score?.toFixed(4) || data.raw_prs?.toFixed(4) || 'N/A'}
+          </div>
+        </div>
+        <div
+          style={{
+            background: '#f8fafc',
+            padding: '12px',
+            borderRadius: '8px',
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '4px' }}>
+            Match Rate
+          </div>
+          <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#1e293b' }}>
+            {(data.match_rate || (data.matched_variants / data.total_variants) * 100).toFixed(1)}%
           </div>
         </div>
         <div
@@ -239,6 +304,56 @@ function ExpandedDetails({ disease, data, riskCategory }) {
           </div>
         </div>
       </div>
+
+      {/* PGS Catalog Reference */}
+      {data.pgs_id && (
+        <div
+          style={{
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#3b82f6"
+              strokeWidth="2"
+            >
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+            <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#1e40af' }}>
+              Score: {data.pgs_id}
+            </span>
+            <a
+              href={`https://www.pgscatalog.org/score/${data.pgs_id}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                marginLeft: 'auto',
+                fontSize: '0.8rem',
+                color: '#3b82f6',
+                textDecoration: 'none',
+              }}
+            >
+              View in PGS Catalog →
+            </a>
+          </div>
+          <p style={{ margin: '8px 0 0', fontSize: '0.8rem', color: '#475569' }}>
+            This score uses {data.total_variants.toLocaleString()} genetic variants from
+            peer-reviewed research published in the PGS Catalog.
+          </p>
+        </div>
+      )}
 
       {/* Related Genes */}
       {relatedGenes.length > 0 && (
@@ -433,16 +548,29 @@ export default function DiseaseCard({ disease, data, index = 0, combinedRisk = n
               {category}
             </span>
           </div>
-          <p
+          <div
             style={{
-              margin: '6px 0 0',
-              color: '#64748b',
-              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginTop: '6px',
+              flexWrap: 'wrap',
             }}
           >
-            {data.matched_variants.toLocaleString()} / {data.total_variants.toLocaleString()}{' '}
-            variants matched
-          </p>
+            <p
+              style={{
+                margin: 0,
+                color: '#64748b',
+                fontSize: '0.85rem',
+              }}
+            >
+              {data.matched_variants.toLocaleString()} / {data.total_variants.toLocaleString()}{' '}
+              variants ({data.match_rate?.toFixed(1) || ((data.matched_variants / data.total_variants) * 100).toFixed(1)}%)
+            </p>
+            <MatchQualityIndicator
+              matchRate={data.match_rate || (data.matched_variants / data.total_variants) * 100}
+            />
+          </div>
         </div>
 
         {/* Risk Score */}

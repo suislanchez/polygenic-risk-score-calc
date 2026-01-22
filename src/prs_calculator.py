@@ -265,9 +265,13 @@ def compute_single_disease(
             "risk_category": "Insufficient Data"
         }
 
+    # Extract PGS ID from catalog (catalog values are dicts)
+    disease_info = DISEASE_CATALOG.get(disease.lower(), {})
+    pgs_id = disease_info.get("pgs_id") if isinstance(disease_info, dict) else disease_info
+
     return {
         "disease": disease,
-        "pgs_id": DISEASE_CATALOG.get(disease.lower()),
+        "pgs_id": pgs_id,
         "matched_variants": prs_result["matched_variants"],
         "total_variants": prs_result["total_variants"],
         "match_rate": prs_result["match_rate"],
