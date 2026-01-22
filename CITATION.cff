@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "PRS Calculator: A Web-Based Tool for Computing Polygenic Risk Scores from Consumer Genotyping Data"
+version: 3.0.0
+date-released: 2026-01-22
+url: "https://github.com/suislanchez/polygenic-risk-score-calc"
+repository-code: "https://github.com/suislanchez/polygenic-risk-score-calc"
+license: MIT
+authors:
+  - family-names: Sanchez
+    given-names: Luis
+keywords:
+  - polygenic risk scores
+  - genomics
+  - bioinformatics
+  - precision medicine
+  - genetic risk
+  - PGS Catalog
+abstract: >-
+  PRS Calculator is an open-source web application that computes
+  polygenic risk scores from consumer direct-to-consumer genotyping
+  data (23andMe, AncestryDNA, VCF) using validated scoring files
+  from the PGS Catalog. The tool implements position-based variant
+  matching with strand flip detection and provides ancestry-aware
+  population normalization for five major ancestry groups.
+references:
+  - type: article
+    authors:
+      - family-names: Lambert
+        given-names: Samuel A.
+    title: "The Polygenic Score Catalog as an open database for reproducibility and systematic evaluation"
+    journal: "Nature Genetics"
+    volume: 53
+    start: 420
+    end: 425
+    year: 2021
+    doi: "10.1038/s41588-021-00783-5"
