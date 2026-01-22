@@ -3,10 +3,18 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![PGS Catalog](https://img.shields.io/badge/PGS%20Catalog-50%2B%20Scores-green.svg)](https://www.pgscatalog.org/)
+[![JOSS](https://img.shields.io/badge/JOSS-Submission%20Ready-yellow.svg)](paper.md)
 
 A production-ready web application for computing polygenic risk scores (PRS) from direct-to-consumer DNA testing data. Uses validated scoring files from the [PGS Catalog](https://www.pgscatalog.org/) with ancestry-aware population normalization.
 
 **Live Demo**: [prs-calculator.vercel.app](https://prs-calculator.vercel.app)
+
+### Authors
+
+| Name | Affiliation | Email | Links |
+|------|-------------|-------|-------|
+| **Luis Sanchez** | UC Berkeley | luisanchez@berkeley.edu | [Website](https://suislanchez.com) · [GitHub](https://github.com/suislanchez) · [LinkedIn](https://linkedin.com/in/suislanchez) |
+| **Shubhankar Tripathy** | Stanford / UMass | stripathy@umass.edu | [LinkedIn](https://linkedin.com/in/shubhankartripathy) · [GitHub](https://github.com/shubhankartripathy) |
 
 ---
 
@@ -406,13 +414,15 @@ If you use this tool in your research, please cite:
 
 ```bibtex
 @software{prs_calculator,
-  title = {Consumer-Grade Polygenic Risk Score Calculator},
-  author = {Sanchez, Luis},
+  title = {PRS Calculator: A Web-Based Tool for Computing Polygenic Risk Scores from Consumer Genotyping Data},
+  author = {Sanchez, Luis and Tripathy, Shubhankar},
   year = {2026},
   url = {https://github.com/suislanchez/polygenic-risk-score-calc},
   version = {3.0}
 }
 ```
+
+Or use the "Cite this repository" button on GitHub.
 
 ---
 
