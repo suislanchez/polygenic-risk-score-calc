@@ -8,6 +8,10 @@ import DistributionCurve from '../../components/results/DistributionCurve';
 import CategoryChart from '../../components/results/CategoryChart';
 import ExportPanel from '../../components/results/ExportPanel';
 import {
+  AnimatedDistributionCurve,
+  AnimatedCategoryRadar,
+} from '../../components/animations';
+import {
   getDiseaseCategory,
   formatDiseaseName,
   CATEGORY_COLORS,
@@ -376,6 +380,53 @@ export default function ResultsPage() {
             size={300}
             title="Risk Profile by Category"
           />
+        </div>
+
+        {/* Animated Interactive Charts Section - Manim-style */}
+        <div
+          style={{
+            marginBottom: '24px',
+          }}
+        >
+          <h3
+            style={{
+              fontSize: '1.1rem',
+              color: '#475569',
+              marginBottom: '16px',
+              fontWeight: '600',
+            }}
+          >
+            Interactive Visualizations
+          </h3>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
+              gap: '24px',
+            }}
+          >
+            {/* Animated Distribution Curve */}
+            <AnimatedDistributionCurve
+              percentile={stats?.averagePercentile || 50}
+              width={450}
+              height={280}
+              autoPlay={true}
+              showAnnotations={true}
+              title="Population Distribution (Animated)"
+            />
+
+            {/* Animated Category Radar */}
+            <AnimatedCategoryRadar
+              data={stats?.categoryStats ? Object.entries(stats.categoryStats).map(([category, data]) => ({
+                category,
+                percentile: data.averagePercentile,
+                color: CATEGORY_COLORS[category] || '#3b82f6',
+              })) : []}
+              size={320}
+              autoPlay={true}
+              title="Risk by Category (Animated)"
+            />
+          </div>
         </div>
 
         {/* Export Panel */}

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import QuestionnaireForm from '../../components/questionnaire/QuestionnaireForm'
+import { AnimatedRiskModifier } from '../../components/animations'
 
 // Color scheme
 const COLORS = {
@@ -216,6 +217,23 @@ export default function QuestionnairePage() {
                 <strong>Privacy Note:</strong> All information is stored locally on your device and is never transmitted
                 to our servers. Your data is used solely to enhance your risk calculations.
               </p>
+            </div>
+
+            {/* Manim-style risk modifier visualization */}
+            <div style={{ marginTop: '24px' }}>
+              <AnimatedRiskModifier
+                baseRisk={55}
+                modifiers={[
+                  { name: 'Smoking', impact: +12, color: '#FC6255', icon: '🚬' },
+                  { name: 'Exercise', impact: -8, color: '#83C167', icon: '🏃' },
+                  { name: 'Family Hx', impact: +10, color: '#FF8C00', icon: '👨‍👩‍👧' },
+                  { name: 'Diet', impact: -5, color: '#5CD0B3', icon: '🥗' },
+                ]}
+                width={400}
+                height={180}
+                autoPlay={true}
+                title="See How Lifestyle Factors Adjust Your Risk"
+              />
             </div>
           </div>
 

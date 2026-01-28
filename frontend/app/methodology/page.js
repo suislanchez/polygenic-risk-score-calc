@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { AnimatedFormula, AnimatedDistributionCurve } from '../../components/animations';
 
 // ============================================================================
 // REUSABLE COMPONENTS
@@ -1135,6 +1136,11 @@ export default function MethodologyPage() {
               PRS<sub>raw</sub> = Σ<sub>j=1</sub><sup>M</sup> β<sub>j</sub> × G<sub>j</sub>
             </Formula>
 
+            {/* Manim-style animated formula visualization */}
+            <div style={{ margin: '24px 0' }}>
+              <AnimatedFormula autoPlay={true} showControls={true} />
+            </div>
+
             <p style={{ color: '#475569', lineHeight: '1.8', marginBottom: '16px' }}>
               Where β<sub>j</sub> is the effect weight for variant <em>j</em> (typically log odds ratio)
               and G<sub>j</sub> is the dosage (0, 1, or 2) of the effect allele. Effect weights are
@@ -1214,6 +1220,21 @@ export default function MethodologyPage() {
             <Figure number="3" caption="PRS distribution following standard normal approximation. Shaded regions indicate low-risk (<10th percentile) and high-risk (>90th percentile) tails. The orange marker shows an example individual at the 93rd percentile.">
               <PRSDistributionCurve />
             </Figure>
+
+            {/* Interactive animated distribution curve */}
+            <div style={{ margin: '32px 0' }}>
+              <h4 style={{ fontSize: '1rem', color: '#475569', marginBottom: '12px', fontWeight: '500' }}>
+                Interactive Visualization
+              </h4>
+              <AnimatedDistributionCurve
+                percentile={72}
+                width={500}
+                height={280}
+                autoPlay={true}
+                showAnnotations={true}
+                title="Understanding Your Population Position"
+              />
+            </div>
           </section>
 
           {/* ================================================================

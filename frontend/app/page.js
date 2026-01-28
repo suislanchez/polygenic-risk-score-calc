@@ -9,6 +9,7 @@ import Button from '../components/ui/Button'
 import { Card, CardBody } from '../components/ui/Card'
 import RiskGauge from '../components/ui/RiskGauge'
 import ProgressBar from '../components/ui/ProgressBar'
+import { AnimatedDNAHelix, AnimatedRiskModifier } from '../components/animations'
 import {
   calculateCombinedRisk,
   getRiskCategory,
@@ -540,19 +541,23 @@ function HeroSection({ onGetStarted }) {
         zIndex: 1,
         textAlign: 'center',
       }}>
-        {/* DNA Icon */}
+        {/* Animated DNA Helix - Manim-style */}
         <div style={{
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '80px',
-          height: '80px',
-          background: 'rgba(255,255,255,0.15)',
-          borderRadius: 'var(--radius-2xl, 1rem)',
-          marginBottom: 'var(--spacing-6, 1.5rem)',
-          backdropFilter: 'blur(10px)',
+          marginBottom: 'var(--spacing-4, 1rem)',
         }}>
-          <DNAIcon />
+          <AnimatedDNAHelix
+            width={120}
+            height={160}
+            autoPlay={true}
+            speed={0.8}
+            highlightVariant={3}
+            style={{
+              filter: 'drop-shadow(0 0 20px rgba(88, 196, 221, 0.4))',
+            }}
+          />
         </div>
 
         <h1 style={{
@@ -892,6 +897,66 @@ function FeaturesSection() {
             <RiskGauge percentile={72.5} riskCategory="Elevated" size={240} />
           </Card>
         </div>
+      </div>
+    </section>
+  )
+}
+
+// Interactive Animation Demo Section - Manim-style
+function AnimationDemoSection() {
+  return (
+    <section style={{
+      background: 'var(--color-surface-secondary, #f8fafc)',
+      padding: 'var(--spacing-16, 4rem) var(--spacing-5, 1.25rem)',
+    }}>
+      <div style={{
+        maxWidth: 'var(--container-lg, 1024px)',
+        margin: '0 auto',
+        textAlign: 'center',
+      }}>
+        <h2 style={{
+          fontSize: 'clamp(1.5rem, 4vw, 2.25rem)',
+          fontWeight: 'var(--font-weight-bold, 700)',
+          color: 'var(--color-text-primary, #1e293b)',
+          marginBottom: 'var(--spacing-3, 0.75rem)',
+        }}>
+          See How <span style={{ color: 'var(--color-primary, #0ea5e9)' }}>Lifestyle</span> Affects Your Risk
+        </h2>
+        <p style={{
+          fontSize: 'var(--font-size-lg, 1.125rem)',
+          color: 'var(--color-text-secondary, #64748b)',
+          marginBottom: 'var(--spacing-8, 2rem)',
+          maxWidth: '600px',
+          margin: '0 auto var(--spacing-8, 2rem)',
+        }}>
+          Genetics isn't destiny. Watch how modifiable factors like smoking, exercise, and diet
+          can significantly adjust your genetic risk score.
+        </p>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+        }}>
+          <AnimatedRiskModifier
+            baseRisk={60}
+            modifiers={[
+              { name: 'No Smoking', impact: -8, color: '#83C167', icon: '🚭' },
+              { name: 'Exercise', impact: -12, color: '#5CD0B3', icon: '🏃' },
+              { name: 'Healthy Diet', impact: -7, color: '#58C4DD', icon: '🥗' },
+            ]}
+            width={500}
+            height={200}
+            autoPlay={true}
+            title="Example: Reducing Cardiovascular Risk"
+          />
+        </div>
+        <p style={{
+          fontSize: 'var(--font-size-sm, 0.875rem)',
+          color: 'var(--color-text-muted, #94a3b8)',
+          marginTop: 'var(--spacing-4, 1rem)',
+          fontStyle: 'italic',
+        }}>
+          Animation inspired by 3Blue1Brown's educational visualizations
+        </p>
       </div>
     </section>
   )
@@ -1341,6 +1406,7 @@ export default function Home() {
         <StatsSection />
         <ProcessSection />
         <FeaturesSection />
+        <AnimationDemoSection />
         <CalculatorSection
           questionnaireData={questionnaireData}
           questionnaireCompleted={questionnaireCompleted}
