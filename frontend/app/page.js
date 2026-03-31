@@ -986,14 +986,45 @@ function CalculatorSection({ questionnaireData, questionnaireCompleted, onClearQ
     setResults(null)
 
     try {
+      // Compress file client-side to avoid Vercel payload limits
+      const fileBytes = new Uint8Array(await file.arrayBuffer())
+      const cs = new CompressionStream('gzip')
+      const writer = cs.writable.getWriter()
+      writer.write(fileBytes)
+      writer.close()
+      const compressedChunks = []
+      const reader = cs.readable.getReader()
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        compressedChunks.push(value)
+      }
+      const compressedBlob = new Blob(compressedChunks, { type: 'application/gzip' })
+
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', compressedBlob, file.name + '.gz')
+      formData.append('original_filename', file.name)
       formData.append('ancestry', ancestry)
+      formData.append('compressed', 'true')
 
       const response = await fetch('/api/compute', {
         method: 'POST',
         body: formData,
       })
+
+      if (!response.ok) {
+        let message = `Server error (${response.status})`
+        try {
+          const errData = await response.json()
+          message = errData.message || message
+        } catch {
+          const text = await response.text()
+          if (response.status === 413 || text.includes('Request Entity Too Large') || text.includes('body exceeded')) {
+            message = 'File is too large. Please ensure your file is under 50 MB.'
+          }
+        }
+        throw new Error(message)
+      }
 
       const data = await response.json()
 
